@@ -198,6 +198,96 @@
           border-radius: 14px;
         }
       }
+
+      /* ─── REST Tester ─── */
+      .rest-controls {
+        display: grid;
+        gap: 10px;
+      }
+
+      .rest-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .rest-row select {
+        width: 110px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .rest-row input {
+        flex: 1;
+        margin: 0;
+      }
+
+      .rest-row button {
+        white-space: nowrap;
+      }
+
+      .quick-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .quick-label {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+
+      .quick-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .quick {
+        font-size: 0.82rem;
+        padding: 7px 12px;
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        font-weight: 600;
+      }
+
+      .quick:hover {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .rest-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .http-badge {
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .http-badge.err {
+        background: var(--danger);
+      }
+
+      .time-badge {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+      }
     </style>
   </head>
   <body>
@@ -211,6 +301,57 @@
         <div class="endpoints">
           <span class="tag">GET /health</span>
           <span class="tag">POST /chat</span>
+          <span class="tag">CRUD /api/users</span>
+          <span class="tag">CRUD /api/posts</span>
+        </div>
+      </section>
+
+      <!-- ─── REST API Tester ─── -->
+      <section class="panel">
+        <h2>REST API Tester</h2>
+        <div class="grid">
+          <div class="rest-controls">
+            <div class="rest-row">
+              <select id="rest-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+              <input id="rest-url" value="/api/users" placeholder="/api/users" />
+              <button id="rest-send" type="button">Enviar</button>
+            </div>
+            <label>
+              Body (JSON) — solo para POST / PUT
+              <textarea id="rest-body" rows="3">{}</textarea>
+            </label>
+          </div>
+
+          <div class="quick-actions">
+            <span class="quick-label">Acciones rápidas:</span>
+            <div class="quick-grid">
+              <button type="button" class="quick" data-method="GET" data-url="/api/users" data-body="">GET Users</button>
+              <button type="button" class="quick" data-method="POST" data-url="/api/users" data-body='{"name":"Test User","email":"test@example.com"}'>POST User</button>
+              <button type="button" class="quick" data-method="GET" data-url="/api/users/1" data-body="">GET User 1</button>
+              <button type="button" class="quick" data-method="PUT" data-url="/api/users/1" data-body='{"name":"Updated Name"}'>PUT User 1</button>
+              <button type="button" class="quick" data-method="DELETE" data-url="/api/users/1" data-body="">DEL User 1</button>
+              <button type="button" class="quick" data-method="GET" data-url="/api/posts" data-body="">GET Posts</button>
+              <button type="button" class="quick" data-method="POST" data-url="/api/posts" data-body='{"title":"My Post","content":"Hello world","user_id":1}'>POST Post</button>
+              <button type="button" class="quick" data-method="GET" data-url="/api/posts/1" data-body="">GET Post 1</button>
+              <button type="button" class="quick" data-method="PUT" data-url="/api/posts/1" data-body='{"title":"Updated Title"}'>PUT Post 1</button>
+              <button type="button" class="quick" data-method="DELETE" data-url="/api/posts/1" data-body="">DEL Post 1</button>
+              <button type="button" class="quick" data-method="GET" data-url="/health" data-body="">Health</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="rest-meta">
+              <span id="rest-status" class="status">Listo.</span>
+              <span id="rest-http" class="http-badge" hidden></span>
+              <span id="rest-time" class="time-badge" hidden></span>
+            </div>
+            <pre id="rest-result">Selecciona una acción o escribe la petición manualmente.</pre>
+          </div>
         </div>
       </section>
 
@@ -374,6 +515,91 @@ Dime una frase corta sobre APIs minimalistas.
           sendButton.disabled = false;
         }
       });
+
+      // ─── REST API Tester ───
+      const restMethod = document.getElementById("rest-method");
+      const restUrl = document.getElementById("rest-url");
+      const restBody = document.getElementById("rest-body");
+      const restSend = document.getElementById("rest-send");
+      const restStatus = document.getElementById("rest-status");
+      const restHttp = document.getElementById("rest-http");
+      const restTime = document.getElementById("rest-time");
+      const restResult = document.getElementById("rest-result");
+
+      // Quick action buttons
+      document.querySelectorAll(".quick").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          restMethod.value = btn.dataset.method;
+          restUrl.value = btn.dataset.url;
+          restBody.value = btn.dataset.body || "{}";
+          fireRestRequest();
+        });
+      });
+
+      restSend.addEventListener("click", fireRestRequest);
+
+      // Also fire on Enter in the URL input
+      restUrl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          fireRestRequest();
+        }
+      });
+
+      async function fireRestRequest() {
+        const method = restMethod.value;
+        const url = restUrl.value.trim();
+        if (!url) {
+          restStatus.textContent = "URL vacía";
+          restStatus.classList.add("error");
+          return;
+        }
+
+        restSend.disabled = true;
+        restStatus.classList.remove("error");
+        restStatus.textContent = "Enviando...";
+        restHttp.hidden = true;
+        restTime.hidden = true;
+        restResult.textContent = "...";
+
+        const start = performance.now();
+
+        try {
+          const opts = { method, headers: { "Content-Type": "application/json" } };
+          if (method === "POST" || method === "PUT") {
+            opts.body = restBody.value;
+          }
+
+          const res = await fetch(url, opts);
+          const elapsed = Math.round(performance.now() - start);
+
+          // Show HTTP badge
+          restHttp.textContent = res.status + " " + res.statusText;
+          restHttp.classList.toggle("err", !res.ok);
+          restHttp.hidden = false;
+
+          // Show time
+          restTime.textContent = elapsed + " ms";
+          restTime.hidden = false;
+
+          const text = await res.text();
+          try {
+            const json = JSON.parse(text);
+            restResult.textContent = JSON.stringify(json, null, 2);
+          } catch {
+            restResult.textContent = text;
+          }
+
+          restStatus.textContent = res.ok ? "OK" : "Error";
+          if (!res.ok) restStatus.classList.add("error");
+        } catch (err) {
+          restStatus.textContent = err.message || "Error de red";
+          restStatus.classList.add("error");
+          restResult.textContent = JSON.stringify({ error: err.message }, null, 2);
+        } finally {
+          restSend.disabled = false;
+        }
+      }
     </script>
   </body>
 </html>
