@@ -1,5 +1,9 @@
 import { OpenRouter } from "@openrouter/sdk";
 import landing from "./landing.html";
+import { initDatabase } from "./db";
+import { usersRoutes, postsRoutes } from "./routes";
+
+await initDatabase();
 
 const apiKey = Bun.env.OPENROUTER_API_KEY;
 const openrouter = apiKey ? new OpenRouter({ apiKey }) : null;
@@ -14,6 +18,8 @@ Bun.serve({
     "/health": new Response(JSON.stringify({ status: "ok" }), {
       headers: jsonHeaders,
     }),
+    ...usersRoutes,
+    ...postsRoutes,
     "/chat": {
       POST: async (req) => {
         try {
