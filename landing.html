@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CubePath API Playground</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap");
+
+      :root {
+        --bg: #f6f1e6;
+        --surface: #fffaf0;
+        --ink: #1f2421;
+        --ink-soft: #4f564f;
+        --line: #d7ccbb;
+        --accent: #2a6f45;
+        --accent-strong: #1d4d31;
+        --danger: #9e2d2d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Manrope", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 15%, #fef4da 0%, transparent 40%),
+          radial-gradient(circle at 85% 80%, #dce9d8 0%, transparent 45%),
+          var(--bg);
+      }
+
+      .page {
+        width: min(960px, 92vw);
+        margin: 48px auto;
+        display: grid;
+        gap: 24px;
+      }
+
+      .hero,
+      .panel {
+        background: color-mix(in srgb, var(--surface) 90%, white);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 20px 45px rgba(31, 36, 33, 0.08);
+      }
+
+      .hero {
+        padding: 28px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-family: "Fraunces", serif;
+        font-size: clamp(2rem, 4vw, 3.1rem);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+      }
+
+      .hero p {
+        margin: 10px 0 0;
+        color: var(--ink-soft);
+        max-width: 55ch;
+      }
+
+      .endpoints {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .tag {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        background: #fff;
+      }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .panel h2 {
+        margin: 0 0 14px;
+        font-family: "Fraunces", serif;
+        font-size: 1.5rem;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      label {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+
+      textarea,
+      input {
+        width: 100%;
+        margin-top: 6px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+
+      .toggle input {
+        width: auto;
+        margin: 0;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #f8fff9;
+        padding: 11px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, background-color 120ms ease;
+      }
+
+      button:hover {
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        transform: none;
+      }
+
+      .status {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      pre {
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        background: #fff;
+        color: #202320;
+        font-size: 0.92rem;
+        overflow: auto;
+      }
+
+      .footer {
+        text-align: center;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+      }
+
+      @media (max-width: 680px) {
+        .page {
+          margin: 24px auto;
+        }
+
+        .hero,
+        .panel {
+          padding: 18px;
+          border-radius: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1>CubePath API Playground</h1>
+        <p>
+          Prueba la API en vivo desde esta pagina. Escribe un mensaje y envia una
+          solicitud a <strong>POST /chat</strong>.
+        </p>
+        <div class="endpoints">
+          <span class="tag">GET /health</span>
+          <span class="tag">POST /chat</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Probar Chat</h2>
+        <form id="chat-form" class="grid">
+          <label>
+            Mensaje
+            <textarea id="message" name="message" required>
+Dime una frase corta sobre APIs minimalistas.
+            </textarea>
+          </label>
+
+          <label>
+            Modelo (opcional)
+            <input id="model" name="model" placeholder="openrouter/free" />
+          </label>
+
+          <div class="actions">
+            <button id="send-btn" type="submit">Enviar</button>
+            <label class="toggle">
+              <input id="stream" name="stream" type="checkbox" checked />
+              Stream en tiempo real
+            </label>
+            <span id="status" class="status">Listo para enviar.</span>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Respuesta</h2>
+        <pre id="result">Aun no hay respuesta.</pre>
+      </section>
+
+      <section class="footer">API en http://localhost:3000</section>
+    </main>
+
+    <script>
+      const form = document.getElementById("chat-form");
+      const messageInput = document.getElementById("message");
+      const modelInput = document.getElementById("model");
+      const sendButton = document.getElementById("send-btn");
+      const streamInput = document.getElementById("stream");
+      const statusNode = document.getElementById("status");
+      const resultNode = document.getElementById("result");
+
+      async function readStreamResponse(response) {
+        if (!response.body) {
+          throw new Error("No se pudo abrir el stream de respuesta");
+        }
+
+        const decoder = new TextDecoder();
+        const reader = response.body.getReader();
+        let buffer = "";
+        let reply = "";
+        let meta = null;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.trim()) {
+              continue;
+            }
+
+            const event = JSON.parse(line);
+
+            if (event.type === "delta") {
+              reply += event.content || "";
+              resultNode.textContent = reply;
+            }
+
+            if (event.type === "done") {
+              meta = {
+                model: event.model,
+                reasoningTokens: event.reasoningTokens,
+              };
+            }
+
+            if (event.type === "error") {
+              throw new Error(event.error || "Error en streaming");
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          const event = JSON.parse(buffer);
+          if (event.type === "done") {
+            meta = {
+              model: event.model,
+              reasoningTokens: event.reasoningTokens,
+            };
+          }
+        }
+
+        return { reply, meta };
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const message = messageInput.value.trim();
+        const model = modelInput.value.trim();
+        const stream = streamInput.checked;
+
+        if (!message) {
+          statusNode.textContent = "El mensaje es obligatorio.";
+          statusNode.classList.add("error");
+          return;
+        }
+
+        sendButton.disabled = true;
+        statusNode.classList.remove("error");
+        statusNode.textContent = stream
+          ? "Recibiendo stream en tiempo real..."
+          : "Consultando OpenRouter...";
+        resultNode.textContent = stream ? "" : "Esperando respuesta...";
+
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              ...(model ? { model } : {}),
+              stream,
+            }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || "Error en la solicitud");
+          }
+
+          if (stream) {
+            const { reply, meta } = await readStreamResponse(response);
+            statusNode.textContent = meta
+              ? `Completado (${meta.model}, reasoning: ${meta.reasoningTokens ?? "n/a"})`
+              : "Completado";
+            if (!reply) {
+              resultNode.textContent = "(sin contenido)";
+            }
+          } else {
+            const data = await response.json();
+            resultNode.textContent = JSON.stringify(data, null, 2);
+            statusNode.textContent = "Respuesta recibida.";
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Error desconocido";
+          statusNode.textContent = message;
+          statusNode.classList.add("error");
+          resultNode.textContent = JSON.stringify({ error: message }, null, 2);
+        } finally {
+          sendButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
